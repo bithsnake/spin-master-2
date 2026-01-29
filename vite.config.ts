@@ -6,4 +6,9 @@ export default defineConfig({
     port: 8080,
     open: true,
   },
+  build: {
+    outDir: "dist",
+  },
+  plugins: [],
+  base: "./spin-master",
 });
