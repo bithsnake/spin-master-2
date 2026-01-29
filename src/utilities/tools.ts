@@ -73,6 +73,41 @@ export function canvasCenterY(app: Application<Renderer>) {
 }
 
 // --- SOUND ---
+const preloadedSounds = new Map<SoundLibrary, Howl>();
+
+export function preloadSound(src: SoundLibrary): Promise<Howl> {
+  const cached = preloadedSounds.get(src);
+  if (cached) return Promise.resolve(cached);
+
+  return new Promise((resolve, reject) => {
+    const sound = new Howl({
+      src: [src],
+      preload: true,
+    });
+
+    sound.once("load", () => {
+      preloadedSounds.set(src, sound);
+      resolve(sound);
+    });
+
+    sound.once("loaderror", (_id, error) => {
+      reject(new Error(`Failed to load sound: ${src} (${error ?? "unknown"})`));
+    });
+  });
+}
+
+export async function preloadSounds(sounds: SoundLibrary[]): Promise<void> {
+  await Promise.all(
+    sounds.map(async (sound) => {
+      try {
+        await preloadSound(sound);
+      } catch (error) {
+        console.warn(error);
+      }
+    }),
+  );
+}
+
 export function playSound(
   src: SoundLibrary,
   vol = 0.5,
@@ -90,10 +125,17 @@ export function playSound(
 }
 
 export function initSound(src: SoundLibrary, vol = 0.7, loop = false): Howl {
+  const cached = preloadedSounds.get(src);
+  if (cached) {
+    cached.volume(vol);
+    cached.loop(loop);
+    return cached;
+  }
   return new Howl({
     src: [src],
     loop,
     volume: vol,
+    preload: true,
   });
 }
 

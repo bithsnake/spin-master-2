@@ -29,6 +29,7 @@ import {
   createText,
   initSound,
   playSound,
+  preloadSounds,
 } from "./utilities/tools";
 import { spinmaster, track2 } from "./utilities/soundLibrary";
 import { eventBus } from "./utilities/event-bus";
@@ -65,6 +66,8 @@ import { loadFontAssets, STYLE_KEY } from "./utilities/style-library";
   ]);
 
   await loadFontAssets();
+
+  await preloadSounds([spinmaster, track2]);
 
   const app = new Application();
 
