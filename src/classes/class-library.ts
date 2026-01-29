@@ -320,8 +320,7 @@ export class ReelInstance extends GameObject {
     ];
 
     this.slotTextures.forEach((texture) => {
-      const source = texture.label || texture.textureCacheIds?.[0] || "";
-      const name = source ? source.split("/").pop()?.split(".")[0] : "";
+      const name = this.getTextureName(texture);
       if (name) texture.label = name;
     });
 
@@ -527,9 +526,7 @@ export class ReelInstance extends GameObject {
       for (let i = changeOnIndex.from; i <= changeOnIndex.to; i++) {
         const newTexture = getRandomTexture(this.slotTextures);
         (container.children[i] as Sprite).texture = newTexture;
-        const source =
-          newTexture.label || newTexture.textureCacheIds?.[0] || "";
-        const name = source ? source.split("/").pop()?.split(".")[0] : "";
+        const name = this.getTextureName(newTexture);
         if (name) container.children[i].label = name;
       }
     } else {
@@ -537,9 +534,7 @@ export class ReelInstance extends GameObject {
         const newTexture = getRandomTexture(this.slotTextures);
 
         (symbol as Sprite).texture = newTexture;
-        const source =
-          newTexture.label || newTexture.textureCacheIds?.[0] || "";
-        const name = source ? source.split("/").pop()?.split(".")[0] : "";
+        const name = this.getTextureName(newTexture);
         if (name) symbol.label = name;
       }
     }
@@ -581,12 +576,10 @@ export class ReelInstance extends GameObject {
 
     const counts = new Map<string, number>();
     for (const symbol of found) {
-      const source =
+      const key =
         symbol.label ||
         symbol.texture.label ||
-        symbol.texture.textureCacheIds?.[0] ||
-        "";
-      const key = source ? source.split("/").pop()?.split(".")[0] : "";
+        this.getTextureName(symbol.texture);
       if (!key) {
         return { amount: 0, multiplier: 0 };
       }
@@ -602,6 +595,15 @@ export class ReelInstance extends GameObject {
       amount: global.betAmount * maxCount,
       multiplier: maxCount,
     };
+  }
+
+  private getTextureName(texture: Texture): string {
+    const anyTexture = texture as unknown as {
+      textureCacheIds?: string[];
+      label?: string;
+    };
+    const source = anyTexture.label || anyTexture.textureCacheIds?.[0] || "";
+    return source ? source.split("/").pop()?.split(".")[0] || "" : "";
   }
 
   private addSlots(): void {
