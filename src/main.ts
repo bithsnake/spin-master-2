@@ -282,6 +282,23 @@ import { loadFontAssets, STYLE_KEY } from "./utilities/style-library";
     playSound(sound, volume ?? 0.5, loop ?? false, pitch ?? 1);
   });
 
+  eventBus.on("SOUND/TRACK_FADE", ({ from, to, durationMs }) => {
+    if (!global.soundtrack) return;
+    global.soundtrack.fade(from, to, durationMs);
+  });
+
+  eventBus.on("SOUND/TRACK_STOP", () => {
+    global.soundtrack?.stop();
+  });
+
+  eventBus.on("SOUND/TRACK_RESET", ({ sound, volume, loop, autoPlay }) => {
+    global.soundtrack?.stop();
+    global.soundtrack = initSound(sound, volume ?? 0.5, loop ?? false);
+    if (autoPlay ?? true) {
+      global.soundtrack.play();
+    }
+  });
+
   eventBus.on("UI/TOGGLE_MUSIC", ({ enabled }) => {
     global.soundtrack?.mute(!enabled);
   });

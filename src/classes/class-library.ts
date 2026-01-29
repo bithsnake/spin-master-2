@@ -31,7 +31,6 @@ import {
   getAppScreenWidth,
   getAppStageHeight,
   getAppStageWidth,
-  initSound,
   pointMeeting,
 } from "../utilities/tools";
 
@@ -81,6 +80,7 @@ export class GlobalState implements IUpdatable {
   textInst: UIText[] = [];
   private _gameIsStared = false;
   private _finishedStage = false;
+  private _lastGameCanRun = true;
 
   get finishedStage(): boolean {
     return this._finishedStage;
@@ -120,6 +120,11 @@ export class GlobalState implements IUpdatable {
       this.gameCanRun = true;
     }
     if (!this.gameIsStarted) return;
+
+    if (this.gameCanRun !== this._lastGameCanRun) {
+      this._lastGameCanRun = this.gameCanRun;
+      eventBus.emit("UI/GAME_STATUS", { canRun: this.gameCanRun });
+    }
 
     if (this.textInst.length > 0) {
       this.textInst.forEach((text) => {
@@ -466,9 +471,11 @@ export class ReelInstance extends GameObject {
           !global.inst.canPress &&
           !global.inst.gameRoundEnded
         ) {
-          if (global.inst.soundtrack?.playing()) {
-            global.inst.soundtrack?.fade(0.5, 0, 1000);
-          }
+          eventBus.emit("SOUND/TRACK_FADE", {
+            from: 0.5,
+            to: 0,
+            durationMs: 1000,
+          });
           global.inst.gameRoundEnded = true;
 
           setTimeout(() => {
@@ -480,10 +487,10 @@ export class ReelInstance extends GameObject {
               balance: global.inst.currentBalance,
             });
 
-            global.inst.soundtrack?.stop();
-            global.inst.soundtrack = initSound(
-              choose(spinmaster, spinmaster, track2),
-            );
+            eventBus.emit("SOUND/TRACK_STOP", {});
+            eventBus.emit("SOUND/TRACK_RESET", {
+              sound: choose(spinmaster, spinmaster, track2),
+            });
 
             if (global.inst.currentWinAmount > 0) {
               instanceCreate(
@@ -897,10 +904,7 @@ export class UIGeneralText extends GameObject {
     this.stepEvent(global);
   }
 
-  protected stepEvent(global: GlobalState): void {
-    if (global.gameCanRun === false) {
-      this.self.text = "GAME NOT RUNNING";
-    }
+  protected stepEvent(_global: GlobalState): void {
     this.self.text = `${this.title}${this.value}`;
   }
 }

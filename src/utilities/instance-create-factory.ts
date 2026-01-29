@@ -110,6 +110,9 @@ export function registerUiEventHandlers(
     (inst) => inst.self.label === WIN_INSTANCE,
   ) as UIGeneralText | undefined;
 
+  const balanceTitle = balanceInst?.title ?? "";
+  const winTitle = winInst?.title ?? "";
+
   const updateBalance = (balance: number) => {
     if (!balanceInst) return;
     balanceInst.value = balance.toString();
@@ -124,6 +127,19 @@ export function registerUiEventHandlers(
 
   eventBus.on("UI/BALANCE_UPDATE", ({ balance }) => updateBalance(balance));
   eventBus.on("UI/WIN_UPDATE", ({ winAmount }) => updateWin(winAmount));
+  eventBus.on("UI/GAME_STATUS", ({ canRun }) => {
+    if (!balanceInst || !winInst) return;
+    if (!canRun) {
+      balanceInst.self.text = "GAME NOT RUNNING";
+      winInst.self.text = "GAME NOT RUNNING";
+      return;
+    }
+
+    balanceInst.title = balanceTitle;
+    winInst.title = winTitle;
+    updateBalance(global.currentBalance);
+    updateWin(global.currentWinAmount);
+  });
 
   updateBalance(global.currentBalance);
   updateWin(global.currentWinAmount);

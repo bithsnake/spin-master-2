@@ -3,12 +3,25 @@ import type { SoundLibrary } from "./soundLibrary";
 export type GameEventMap = {
   "UI/BALANCE_UPDATE": { balance: number };
   "UI/WIN_UPDATE": { winAmount: number };
+  "UI/GAME_STATUS": { canRun: boolean };
   "UI/TOGGLE_MUSIC": { enabled: boolean };
   "SOUND/PLAY": {
     sound: SoundLibrary;
     volume?: number;
     loop?: boolean;
     pitch?: number;
+  };
+  "SOUND/TRACK_FADE": {
+    from: number;
+    to: number;
+    durationMs: number;
+  };
+  "SOUND/TRACK_STOP": Record<string, never>;
+  "SOUND/TRACK_RESET": {
+    sound: SoundLibrary;
+    volume?: number;
+    loop?: boolean;
+    autoPlay?: boolean;
   };
   "SPIN/START": { source: "button" | "auto" };
   "SPIN/STOP": { quickStop: boolean };
