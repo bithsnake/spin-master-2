@@ -1,9 +1,9 @@
-import { Assets, TextStyle } from "pixi.js";
+import { TextStyle } from "pixi.js";
 import { COLOR } from "./colorLibrary";
 import { StyleType } from "../types/types";
 
 const fontFamily = {
-  robotoCondensed: "Roboto Condensed",
+  robotoCondensed: "Arial",
 };
 
 export const STYLE: {
@@ -34,6 +34,5 @@ export const STYLE_KEY: { normal: StyleType; title: StyleType } = {
 };
 
 export async function loadFontAssets(): Promise<void> {
-  const roboto = await Assets.load("/fonts/Roboto_Condensed-Regular.ttf");
-  fontFamily.robotoCondensed = roboto.family.split(" ")[0];
+  fontFamily.robotoCondensed = "Arial";
 }

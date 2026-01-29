@@ -787,7 +787,7 @@ export class UIScrollingText extends UIText {
       anchorPoint,
       value,
       STYLE_KEY.normal,
-      2,
+      1,
       null,
       label,
     );
@@ -845,7 +845,7 @@ export class UIGeneralText extends GameObject {
       anchorPoint || "topLeft",
       title,
       STYLE_KEY.normal,
-      textSize || 1.5,
+      textSize || 1,
       null,
       label || "uiGeneralText",
     );

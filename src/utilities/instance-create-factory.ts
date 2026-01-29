@@ -24,7 +24,7 @@ export async function createGuiTextInstances(global: GlobalState) {
     label: BALANCE_INSTANCE,
     anchorPoint: "topLeft",
     title: "Balance: ",
-    textSize: 1.5,
+    textSize: 1,
   });
 
   GUIBalanceTextInstance.title = "Balance: $";
@@ -37,7 +37,7 @@ export async function createGuiTextInstances(global: GlobalState) {
       label: WIN_INSTANCE,
       anchorPoint: "topLeft",
       title: "Win: ",
-      textSize: 1.5,
+      textSize: 1,
     },
   );
 

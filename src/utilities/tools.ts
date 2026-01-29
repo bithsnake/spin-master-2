@@ -156,7 +156,6 @@ export function createText(
   label: string = "newText",
 ): Text {
   const style = STYLE[styleType](size);
-  style.fontSize = style.fontSize * size;
 
   if (align) style.align = align;
   const textData = new Text({ text, style });
