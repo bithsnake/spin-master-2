@@ -320,8 +320,9 @@ export class ReelInstance extends GameObject {
     ];
 
     this.slotTextures.forEach((texture) => {
-      const name = texture.label!.split("/")[4].split(".")[0];
-      texture.label = name;
+      const source = texture.label || texture.textureCacheIds?.[0] || "";
+      const name = source ? source.split("/").pop()?.split(".")[0] : "";
+      if (name) texture.label = name;
     });
 
     this.addSlots();
@@ -526,18 +527,20 @@ export class ReelInstance extends GameObject {
       for (let i = changeOnIndex.from; i <= changeOnIndex.to; i++) {
         const newTexture = getRandomTexture(this.slotTextures);
         (container.children[i] as Sprite).texture = newTexture;
-        if (newTexture.label !== undefined) {
-          container.children[i].label = newTexture.label;
-        }
+        const source =
+          newTexture.label || newTexture.textureCacheIds?.[0] || "";
+        const name = source ? source.split("/").pop()?.split(".")[0] : "";
+        if (name) container.children[i].label = name;
       }
     } else {
       for (const symbol of container.children) {
         const newTexture = getRandomTexture(this.slotTextures);
 
         (symbol as Sprite).texture = newTexture;
-        if (newTexture.label !== undefined) {
-          symbol.label = newTexture.label;
-        }
+        const source =
+          newTexture.label || newTexture.textureCacheIds?.[0] || "";
+        const name = source ? source.split("/").pop()?.split(".")[0] : "";
+        if (name) symbol.label = name;
       }
     }
     function getRandomTexture(slotTextures: Texture[]): Texture {
@@ -550,39 +553,55 @@ export class ReelInstance extends GameObject {
     global: GlobalState,
   ): { amount: number; multiplier: number } {
     const found: Sprite[] = [];
-
-    setFound(this.slotData);
-
-    if (found.length === 0) {
-      console.error("No symbols found");
-    }
-
-    const equalSymbols = found.filter(
-      (symbol) => found.filter((s) => s.label === symbol.label).length > 1,
+    const visibleSymbols = symbolContainer.children.filter(
+      (symbol) => symbol.visible === true,
     );
 
-    return {
-      amount: global.betAmount * equalSymbols.length,
-      multiplier: equalSymbols.length,
-    };
-
-    function setFound(slotData: Graphics[]): void {
-      const visibleSymbols = symbolContainer.children.filter(
-        (symbol) => symbol.visible === true,
-      );
+    for (const slot of this.slotData) {
+      let matched: Sprite | null = null;
       for (const symbol of visibleSymbols) {
-        for (const slot of slotData) {
-          const symPos = symbol.getGlobalPosition();
-          const symbolCenter = {
-            x: symPos.x + symbol.width / 2,
-            y: symPos.y + symbol.height / 2,
-          };
-          if (pointMeeting({ x: symbolCenter.x, y: symbolCenter.y }, slot)) {
-            found.push(<Sprite>symbol);
-          }
+        const symPos = symbol.getGlobalPosition();
+        const symbolCenter = {
+          x: symPos.x + symbol.width / 2,
+          y: symPos.y + symbol.height / 2,
+        };
+        if (pointMeeting({ x: symbolCenter.x, y: symbolCenter.y }, slot)) {
+          matched = <Sprite>symbol;
+          break;
         }
       }
+      if (matched) {
+        found.push(matched);
+      }
     }
+
+    if (found.length !== this.slotData.length) {
+      return { amount: 0, multiplier: 0 };
+    }
+
+    const counts = new Map<string, number>();
+    for (const symbol of found) {
+      const source =
+        symbol.label ||
+        symbol.texture.label ||
+        symbol.texture.textureCacheIds?.[0] ||
+        "";
+      const key = source ? source.split("/").pop()?.split(".")[0] : "";
+      if (!key) {
+        return { amount: 0, multiplier: 0 };
+      }
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+
+    const maxCount = Math.max(...Array.from(counts.values()));
+    if (maxCount < 2) {
+      return { amount: 0, multiplier: 0 };
+    }
+
+    return {
+      amount: global.betAmount * maxCount,
+      multiplier: maxCount,
+    };
   }
 
   private addSlots(): void {
