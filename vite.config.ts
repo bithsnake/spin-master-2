@@ -10,5 +10,5 @@ export default defineConfig({
     outDir: "dist",
   },
   plugins: [],
-  base: "./spin-master",
+  base: "./spin-master-2",
 });
