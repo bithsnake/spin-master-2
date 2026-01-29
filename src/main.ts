@@ -29,7 +29,12 @@ import {
   createGuiTextInstances,
   createInteractiveInstances,
 } from "./utilities/instance-create-factory";
-import { canvasCenterX, choose, initSound } from "./utilities/tools";
+import {
+  canvasCenterX,
+  choose,
+  createText,
+  initSound,
+} from "./utilities/tools";
 import { spinmaster, track2 } from "./utilities/soundLibrary";
 import {
   assetPath,
@@ -44,7 +49,7 @@ import {
   TILE01,
   WIN_BG,
 } from "./utilities/imageLibrary";
-import { loadFontAssets } from "./utilities/style-library";
+import { loadFontAssets, STYLE_KEY } from "./utilities/style-library";
 
 (async () => {
   await Assets.init();
@@ -152,6 +157,104 @@ import { loadFontAssets } from "./utilities/style-library";
   guiInstArray.forEach((inst) => {
     uiContainer.addChild(inst.self);
   });
+
+  // --- MUSIC TOGGLE ---
+  const musicToggleContainer = new Container({ label: "musicToggle" });
+  const musicToggleBg = new Graphics();
+  const musicToggleText = createText(
+    0,
+    0,
+    "topLeft",
+    "Music: On",
+    STYLE_KEY.normal,
+    1.1,
+    "left",
+    "musicToggleText",
+  );
+
+  musicToggleContainer.eventMode = "static";
+  musicToggleContainer.cursor = "pointer";
+
+  let musicEnabled = true;
+  let isHovering = false;
+
+  let musicToggleWidth = 0;
+  const renderMusicToggle = () => {
+    const paddingX = 12;
+    const paddingY = 6;
+    const radius = 6;
+    const bgColorOn = 0x2d6cdf;
+    const bgColorOnHover = 0x1f4fb3;
+    const bgColorOffHover = 0x000000;
+    const bgAlphaOn = 0.85;
+    const bgAlphaOff = 0;
+    const bgAlphaOffHover = 0.2;
+
+    musicToggleText.text = `Music: ${musicEnabled ? "On" : "Off"}`;
+
+    const bgWidth = musicToggleText.width + paddingX * 2;
+    const bgHeight = musicToggleText.height + paddingY * 2;
+
+    musicToggleBg.clear();
+
+    if (musicEnabled) {
+      const color = isHovering ? bgColorOnHover : bgColorOn;
+      musicToggleBg.roundRect(0, 0, bgWidth, bgHeight, radius).fill({
+        color,
+        alpha: bgAlphaOn,
+      });
+    } else if (isHovering) {
+      musicToggleBg
+        .roundRect(0, 0, bgWidth, bgHeight, radius)
+        .fill({ color: bgColorOffHover, alpha: bgAlphaOffHover });
+    } else {
+      musicToggleBg
+        .roundRect(0, 0, bgWidth, bgHeight, radius)
+        .fill({ color: 0x000000, alpha: bgAlphaOff });
+    }
+
+    musicToggleWidth = bgWidth;
+    musicToggleText.position.set(paddingX, paddingY);
+    musicToggleContainer.hitArea = new Rectangle(0, 0, bgWidth, bgHeight);
+    musicToggleContainer.pivot.set(musicToggleWidth, 0);
+  };
+
+  const updateMusicTogglePosition = () => {
+    const x = app.screen.width - 32;
+    const y = 64;
+    musicToggleContainer.position.set(x, y);
+  };
+
+  renderMusicToggle();
+  updateMusicTogglePosition();
+  app.ticker.addOnce(() => {
+    renderMusicToggle();
+    updateMusicTogglePosition();
+  });
+  window.addEventListener("resize", () => {
+    renderMusicToggle();
+    updateMusicTogglePosition();
+  });
+
+  musicToggleContainer.on("pointerdown", () => {
+    musicEnabled = !musicEnabled;
+    global.soundtrack?.mute(!musicEnabled);
+    renderMusicToggle();
+    updateMusicTogglePosition();
+  });
+
+  musicToggleContainer.on("pointerover", () => {
+    isHovering = true;
+    renderMusicToggle();
+  });
+
+  musicToggleContainer.on("pointerout", () => {
+    isHovering = false;
+    renderMusicToggle();
+  });
+
+  musicToggleContainer.addChild(musicToggleBg, musicToggleText);
+  uiContainer.addChild(musicToggleContainer);
 
   const gameContainer = new Container({
     label: GAME_CONTAINER,
