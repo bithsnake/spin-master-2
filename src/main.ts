@@ -7,14 +7,8 @@ import {
   Rectangle,
   Ticker,
 } from "pixi.js";
+import { GameObject, GlobalState, ReelInstance } from "./classes/class-library";
 import {
-  GameObject,
-  GlobalState,
-  ReelInstance,
-  UIGeneralText,
-} from "./classes/class-library";
-import {
-  BALANCE_INSTANCE,
   BG_CONTAINER,
   GAME_CONTAINER,
   INSTANCE_CONTAINER,
@@ -22,20 +16,22 @@ import {
   PLAY_BUTTON,
   REEL_CONTAINER,
   UI_CONTAINER,
-  WIN_INSTANCE,
 } from "./utilities/container-name-library";
 import {
   createBackgroundInstances,
   createGuiTextInstances,
   createInteractiveInstances,
+  registerUiEventHandlers,
 } from "./utilities/instance-create-factory";
 import {
   canvasCenterX,
   choose,
   createText,
   initSound,
+  playSound,
 } from "./utilities/tools";
 import { spinmaster, track2 } from "./utilities/soundLibrary";
+import { eventBus } from "./utilities/event-bus";
 import {
   assetPath,
   PLAY_DISABLED,
@@ -96,6 +92,8 @@ import { loadFontAssets, STYLE_KEY } from "./utilities/style-library";
   const reel = <ReelInstance>instArray[0];
   instArray.splice(0, 1);
   const bgInstArray = <GameObject[]>await createBackgroundInstances(global);
+
+  registerUiEventHandlers(guiInstArray, global);
 
   // cover top and bottom
   const SYMBOL_AMOUNT = 3;
@@ -238,7 +236,7 @@ import { loadFontAssets, STYLE_KEY } from "./utilities/style-library";
 
   musicToggleContainer.on("pointerdown", () => {
     musicEnabled = !musicEnabled;
-    global.soundtrack?.mute(!musicEnabled);
+    eventBus.emit("UI/TOGGLE_MUSIC", { enabled: musicEnabled });
     renderMusicToggle();
     updateMusicTogglePosition();
   });
@@ -277,24 +275,22 @@ import { loadFontAssets, STYLE_KEY } from "./utilities/style-library";
   global.soundtrack.play();
   global.reset();
 
+  eventBus.emit("UI/BALANCE_UPDATE", { balance: global.currentBalance });
+  eventBus.emit("UI/WIN_UPDATE", { winAmount: global.currentWinAmount });
+
+  eventBus.on("SOUND/PLAY", ({ sound, volume, loop, pitch }) => {
+    playSound(sound, volume ?? 0.5, loop ?? false, pitch ?? 1);
+  });
+
+  eventBus.on("UI/TOGGLE_MUSIC", ({ enabled }) => {
+    global.soundtrack?.mute(!enabled);
+  });
+
   let deltaTime = 0;
   const updatables = [
     () => global.update(deltaTime),
     () => instArray.forEach((inst) => inst.update({ inst: global })),
     () => reel.update({ inst: global }),
-    () =>
-      guiInstArray.forEach((inst) => {
-        if (inst.self.label === BALANCE_INSTANCE) {
-          // balance value
-          (<UIGeneralText>inst).value = global.currentBalance.toString();
-          inst.update({ inst: global });
-        }
-        if (inst.self.label === WIN_INSTANCE) {
-          // win value
-          (<UIGeneralText>inst).value = global.currentWinAmount.toString();
-          inst.update({ inst: global });
-        }
-      }),
     () => bgInstArray.forEach((inst) => inst.update({ inst: global })),
   ];
 

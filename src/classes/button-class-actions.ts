@@ -1,6 +1,6 @@
 import { FederatedPointerEvent } from "pixi.js";
 import { sfxCashRegister, sfxPick } from "../utilities/soundLibrary";
-import { playSound } from "../utilities/tools";
+import { eventBus } from "../utilities/event-bus";
 import {
   GlobalState,
   ButtonInstance,
@@ -17,7 +17,7 @@ export const playButtonAction = (
 ) => {
   if (!global.gameCanRun) return;
   if (global.spinTimerSeconds > 1 && global.currentBalance > 0) {
-    playSound(sfxPick, 1);
+    eventBus.emit("SOUND/PLAY", { sound: sfxPick, volume: 1 });
     event.stopPropagation();
     const rc = <ReelInstance>other;
     rc.quickStop = true;
@@ -38,11 +38,13 @@ export const playButtonAction = (
 
   global.spinTimerSeconds = global.spinTimerSecondsMax;
   global.isSpinning = true;
+  eventBus.emit("SPIN/START", { source: "button" });
 
   if (global.currentBalance > 0) {
     (<ReelInstance>other).randomizePosition = Math.round(Math.random());
-    playSound(sfxCashRegister, 0.5);
+    eventBus.emit("SOUND/PLAY", { sound: sfxCashRegister, volume: 0.5 });
     global.currentBalance -= global.betAmount;
+    eventBus.emit("UI/BALANCE_UPDATE", { balance: global.currentBalance });
 
     instanceCreate(selfInst.self.x - 256, 256, UIScrollingText, {
       label: "bet",

@@ -5,6 +5,7 @@ import {
   PointerInstance,
   ReelInstance,
   UIGeneralText,
+  GameObject,
 } from "../classes/class-library";
 import { FromSprite } from "../types/types";
 import { REEL, TILE01 } from "./imageLibrary";
@@ -18,6 +19,7 @@ import {
 } from "./atlas-library";
 import { SYMBOLS_LIST } from "./symbols-library";
 import { BALANCE_INSTANCE, WIN_INSTANCE } from "./container-name-library";
+import { eventBus } from "./event-bus";
 
 export async function createGuiTextInstances(global: GlobalState) {
   const GUIBalanceTextInstance = await instanceCreate(32, 32, UIGeneralText, {
@@ -95,4 +97,34 @@ export async function createBackgroundInstances(global: GlobalState) {
   });
 
   return [BGTiledInstance];
+}
+
+export function registerUiEventHandlers(
+  guiInstArray: GameObject[],
+  global: GlobalState,
+) {
+  const balanceInst = guiInstArray.find(
+    (inst) => inst.self.label === BALANCE_INSTANCE,
+  ) as UIGeneralText | undefined;
+  const winInst = guiInstArray.find(
+    (inst) => inst.self.label === WIN_INSTANCE,
+  ) as UIGeneralText | undefined;
+
+  const updateBalance = (balance: number) => {
+    if (!balanceInst) return;
+    balanceInst.value = balance.toString();
+    balanceInst.update(global);
+  };
+
+  const updateWin = (winAmount: number) => {
+    if (!winInst) return;
+    winInst.value = winAmount.toString();
+    winInst.update(global);
+  };
+
+  eventBus.on("UI/BALANCE_UPDATE", ({ balance }) => updateBalance(balance));
+  eventBus.on("UI/WIN_UPDATE", ({ winAmount }) => updateWin(winAmount));
+
+  updateBalance(global.currentBalance);
+  updateWin(global.currentWinAmount);
 }

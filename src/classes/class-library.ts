@@ -32,7 +32,6 @@ import {
   getAppStageHeight,
   getAppStageWidth,
   initSound,
-  playSound,
   pointMeeting,
 } from "../utilities/tools";
 
@@ -49,6 +48,7 @@ import {
   spinmaster,
   track2,
 } from "../utilities/soundLibrary";
+import { eventBus } from "../utilities/event-bus";
 import {
   assetPath,
   SYM01,
@@ -434,15 +434,26 @@ export class ReelInstance extends GameObject {
                 },
               );
 
-              playSound(
-                result.multiplier === 3 ? highScoreFanfare : sfxPoint,
-                result.multiplier === 3 ? 0.8 : 1.2,
-              );
+              eventBus.emit("SOUND/PLAY", {
+                sound: result.multiplier === 3 ? highScoreFanfare : sfxPoint,
+                volume: result.multiplier === 3 ? 0.8 : 1.2,
+              });
 
               global.inst.currentBalance += result.amount;
               global.inst.currentWinAmount += result.amount;
+              eventBus.emit("UI/BALANCE_UPDATE", {
+                balance: global.inst.currentBalance,
+              });
+              eventBus.emit("UI/WIN_UPDATE", {
+                winAmount: global.inst.currentWinAmount,
+              });
+              eventBus.emit("WIN/RESULT", {
+                amount: result.amount,
+                multiplier: result.multiplier,
+              });
             }
             gl.isSpinning = false;
+            eventBus.emit("SPIN/STOP", { quickStop: this.quickStop });
           }
         });
       }
@@ -465,6 +476,9 @@ export class ReelInstance extends GameObject {
               global.inst.balanceInit + global.inst.currentWinAmount;
             global.inst.gameRoundEnded = false;
             global.inst.canPress = true;
+            eventBus.emit("UI/BALANCE_UPDATE", {
+              balance: global.inst.currentBalance,
+            });
 
             global.inst.soundtrack?.stop();
             global.inst.soundtrack = initSound(
@@ -484,8 +498,14 @@ export class ReelInstance extends GameObject {
                   dir: "up",
                 },
               );
-              playSound(highScoreFanfare, 0.8);
+              eventBus.emit("SOUND/PLAY", {
+                sound: highScoreFanfare,
+                volume: 0.8,
+              });
               global.inst.currentWinAmount = 0;
+              eventBus.emit("UI/WIN_UPDATE", {
+                winAmount: global.inst.currentWinAmount,
+              });
             }
 
             // randomize all symbol textures!
